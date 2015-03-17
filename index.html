@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" ng-app="MyApp">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+</head>
+<body ng-controller="MyController">
+<div class="container">
+<form class="navbar-form navbar-left" role="search" ng-submit="query(cui)">
+  <div class="form-group">
+    <input type="number" class="form-control" placeholder="CUI" ng-model="cui">
+  </div>
+  <button type="submit" class="btn btn-default">Consultar</button>
+</form>
+<div class="panel-body">
+<form name="coursesForm" ng-submit="send()">
+<table class="table table-striped">
+<tr>
+<th> </th>
+<th>Código</th>
+<th>Nombre</th>
+<th>Créditos</th>
+<th>Semestre</th>
+</tr>
+<tr ng-repeat="course in courses">
+<td><input type="checkbox" ng-model="selection.ids[course.id]" name="chosen" id="{{course.id}}" /></td>
+<td>{{course.id}}</td>
+<td>{{course.name}}</td>
+<td>{{course.credits}}</td>
+<td>{{course.semester}}</td>
+</tr>
+</table>
+<button type="submit" class="btn btn-default">Matricular</button>
+<pre ng-bind="selection.ids | json"></pre>
+</form>
+</div>
+
+</div>
+</body>
+<script>
+var app = angular.module("MyApp", []);
+
+app.controller('MyController', function($scope, $http){
+  $scope.count = 0;
+  $scope.cui = 20111464;
+  $scope.courses = [];
+  $scope.selection = {ids:{1: false}};
+  $scope.query = function($cui){
+    $http.get('matricula.php?cui='+$cui)
+      .success(function(data, status, headers, config){
+        $scope.courses = data;
+      }).
+      error(function(data, status, headers, config){
+      });
+  };
+  $scope.send = function(){
+    $http({
+      method: 'GET',
+      url: 'update.php',
+      params:{ cui:$scope.cui, chosen: JSON.stringify($scope.selection.ids)}
+    }).success(function(data){
+        window.alert(data);
+    });
+  };
+});
+</script>
+</html>
