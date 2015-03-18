@@ -4,15 +4,17 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+
 </head>
 <body ng-controller="MyController">
 <div class="container">
-<form class="navbar-form navbar-left" role="search" ng-submit="query(cui)">
-  <div class="form-group">
-    <input type="number" class="form-control" placeholder="CUI" ng-model="cui">
-  </div>
-  <button type="submit" class="btn btn-default">Consultar</button>
-</form>
+
+<span id="googleSignIn">
+<span id="signInButton">
+</span>
+</span>
+
+
 <div class="panel-body">
 <form name="coursesForm" ng-submit="send()">
 <table class="table table-striped">
@@ -37,15 +39,60 @@
 </div>
 
 </div>
+
+<script type="text/javascript">
+(function() {
+ var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+ po.src = 'https://apis.google.com/js/client:plusone.js';
+ var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+ })();
+</script>
+
 </body>
 <script>
 var app = angular.module("MyApp", []);
 
 app.controller('MyController', function($scope, $http){
+  $scope.signedIn = false;
   $scope.count = 0;
-  $scope.cui = 20111464;
+  $scope.cui = "";
   $scope.courses = [];
   $scope.selection = {ids:{1: false}};
+
+  $scope.processAuth = function(authResult){
+    if(authResult['access_token']){
+      $scope.signedIn = true;
+      $http({
+        method: 'GET',
+        url: 'matricula.php',
+        params: {token: authResult['access_token']}
+      }).success(function(data){
+        $scope.courses = data;
+      });
+    }else if(authResult['error']){
+      $scope.signedIn = false;
+    }
+  };
+  $scope.signedInCallback = function(authResult){
+    $scope.$apply(function(){
+      $scope.processAuth(authResult);
+    });
+  };
+
+  $scope.renderSignInButton = function() {
+    gapi.sigin.render('signInButton',{
+      'callback': $scope.signInCallback,
+      'clientid': "792434456801-h437k4b8l1nkl0vu7hqqrtctknunq76p.apps.googleusercontent.com",
+      'requestvisibleactions': 'http://schemas.google.com/AddActivity',
+      'scope': 'https://www.googleapis.com/auth/plus.login https://www.googleapis.com/auth/userinfo.email',
+      'cookiepolicy': 'single_host_origin'
+    });
+  }
+
+  $scope.start = function() {
+    $scope.renderSignInButton();
+  };
+
   $scope.query = function($cui){
     $http.get('matricula.php?cui='+$cui)
       .success(function(data, status, headers, config){

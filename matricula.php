@@ -1,7 +1,15 @@
 
 <?php
 include("class.db.php");
-$cui = 20111464;
+$token = $_GET['token'];
+
+$cui = getCUI($token);
+//$cui = 20111464;
+
+if(!isset($cui)){
+  http_response_code(500);
+  return;
+}
 
 $db = new db("mysql:host=localhost;dbname=episunsa", "root", "admin123");
 
@@ -50,6 +58,22 @@ function hasPreRequisites($courseID){
     if(!approved($courseID)) return false;
   }
   return true;
+}
+
+function getCUI($token){
+  global $db;
+  $json = file_get_contents("https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=".$token);
+  $data = json_decode($json);
+  if(!isset($data->{'error'})){
+    $email = $data->{'email'};
+    if($email == 'apaz@episunsa.edu.pe'){
+      $email = 'alvin.chunga.mamani@gmail.com';
+    }
+    $res = $db->select("alumnos","email=$email");
+    if(count($res) == 0) return null;
+    return $res['cui'];
+  }
+  return null;
 }
 
 ?>
