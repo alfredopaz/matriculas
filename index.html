@@ -10,7 +10,7 @@
 
   <div class="container">
 
-    <form class="navbar-form navbar-left" role="search" ng-submit="query(cui)">
+    <form class="navbar-form navbar-left" role="search" ng-submit="query(cui); queryAvaliableCredits(cui)">
       <div class="form-group">
         <input type="number" class="form-control" placeholder="CUI" ng-model="cui">
       </div>
@@ -54,11 +54,8 @@
       <br>
       <div class="row">
         <div class="col-sm-3" >
-          <form id="coursesForm2" name="coursesForm2" ng-submit="queryAvaliableCredits(cui)" >
-            <button onClick="creditosDisponibles()" type="query" class="btn btn-warning" >CREDITOS DISPONIBLES</button>
+          <button onClick="creditosDisponibles()" type="button" class="btn btn-warning" >CREDITOS DISPONIBLES</button>
             <!-- Times -->
-
-          </form>
         </div>
        <div class="col-sm-3"> <p style="font-size:24px" id="vecesDesaprobado">  </p> </div>
 
@@ -111,9 +108,9 @@
                 }
               }
               var creditos = 0;
-              if(cantVecesLlevado == 0) creditos = 28; //1ra matricula
-              if(cantVecesLlevado == 1) creditos = 23; //2da
-              if(cantVecesLlevado == 2) creditos = 18; //3ra
+              if(cantVecesLlevado == 0) creditos = 28; // 1ra matricula
+              if(cantVecesLlevado == 1) creditos = 23; // 2da
+              if(cantVecesLlevado == 2) creditos = 18; // 3ra
               if(cantVecesLlevado >= 3) creditos = 13; // 4ta a mas
 
               document.getElementById("vecesDesaprobado").innerHTML = creditos;
