@@ -1,18 +1,15 @@
 
 <?php
 include("class.db.php");
-$token = $_GET['token'];
+$db = new db("mysql:host=localhost;dbname=episunsa", "root", "admin123");
+$token = $_GET['key'];
 
 $cui = getCUI($token);
 //$cui = 20111464;
-
-if(!isset($cui)){
+if(empty($cui)){
   http_response_code(500);
   return;
 }
-
-$db = new db("mysql:host=localhost;dbname=episunsa", "root", "admin123");
-
 //TODO sort by semester
 $offeredCourses = $db->select("cursosAbiertos");
 
@@ -69,9 +66,9 @@ function getCUI($token){
     if($email == 'apaz@episunsa.edu.pe'){
       $email = 'alvin.chunga.mamani@gmail.com';
     }
-    $res = $db->select("alumnos","email=$email");
+    $res = $db->select("alumnos","email='$email'");
     if(count($res) == 0) return null;
-    return $res['cui'];
+    return $res[0]['cui'];
   }
   return null;
 }
