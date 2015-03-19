@@ -4,17 +4,19 @@
 <meta charset="utf-8">
 <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
 <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
-
+<script src="google-plus-signin.js"></script>
 </head>
 <body ng-controller="MyController">
+
 <div class="container">
-
-<span id="googleSignIn">
-<span id="signInButton">
-</span>
-</span>
-
-
+<div class="page-header">
+   <h1>Escuela Profesiona de Ingeniería de Sistemas
+      <small>Prematriculas</small>
+   </h1>
+</div>
+<div ng-hide="signedIn" class="ng-hide">
+<google-plus-signin clientid="268197060087-2enik8mb3f81v4jvk36l70psharmauvr.apps.googleusercontent.com" language="es"></google-plus-signin>
+</div>
 <div class="panel-body">
 <form name="coursesForm" ng-submit="send()">
 <table class="table table-striped">
@@ -33,6 +35,7 @@
 <td>{{course.semester}}</td>
 </tr>
 </table>
+
 <button type="submit" class="btn btn-default">Matricular</button>
 <pre ng-bind="selection.ids | json"></pre>
 </form>
@@ -47,65 +50,35 @@
  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
  })();
 </script>
-
+<script src="https://apis.google.com/js/client.js?onload=handleClientLoad"></script>
 </body>
 <script>
-var app = angular.module("MyApp", []);
+var app = angular.module("MyApp", ['directive.g+signin']);
 
 app.controller('MyController', function($scope, $http){
   $scope.signedIn = false;
+  $scope.key = "";
   $scope.count = 0;
   $scope.cui = "";
   $scope.courses = [];
   $scope.selection = {ids:{1: false}};
 
-  $scope.processAuth = function(authResult){
-    if(authResult['access_token']){
-      $scope.signedIn = true;
-      $http({
-        method: 'GET',
-        url: 'matricula.php',
-        params: {token: authResult['access_token']}
-      }).success(function(data){
-        $scope.courses = data;
-      });
-    }else if(authResult['error']){
-      $scope.signedIn = false;
-    }
-  };
-  $scope.signedInCallback = function(authResult){
-    $scope.$apply(function(){
-      $scope.processAuth(authResult);
-    });
-  };
 
-  $scope.renderSignInButton = function() {
-    gapi.sigin.render('signInButton',{
-      'callback': $scope.signInCallback,
-      'clientid': "792434456801-h437k4b8l1nkl0vu7hqqrtctknunq76p.apps.googleusercontent.com",
-      'requestvisibleactions': 'http://schemas.google.com/AddActivity',
-      'scope': 'https://www.googleapis.com/auth/plus.login https://www.googleapis.com/auth/userinfo.email',
-      'cookiepolicy': 'single_host_origin'
-    });
-  }
-
-  $scope.start = function() {
-    $scope.renderSignInButton();
-  };
-
-  $scope.query = function($cui){
-    $http.get('matricula.php?cui='+$cui)
+  $scope.$on('event:google-plus-signin-success', function (event,authResult) {
+    $scope.signedIn = true;
+    $scope.key = authResult.access_token;
+    $http.get('matricula.php?key=' + authResult.access_token)
       .success(function(data, status, headers, config){
         $scope.courses = data;
       }).
       error(function(data, status, headers, config){
       });
-  };
+  });
   $scope.send = function(){
     $http({
       method: 'GET',
       url: 'update.php',
-      params:{ cui:$scope.cui, chosen: JSON.stringify($scope.selection.ids)}
+      params:{ key:$scope.key, chosen: JSON.stringify($scope.selection.ids)}
     }).success(function(data){
         window.alert(data);
     });
