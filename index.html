@@ -2,54 +2,151 @@
 <html lang="es" ng-app="MyApp">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+<link rel="stylesheet" href="bootstrap/css/bootstrap.min.css">
+<script src="angular/angular.min.js"></script>
 </head>
-<body ng-controller="MyController">
-<div class="container">
-<form class="navbar-form navbar-left" role="search" ng-submit="query(cui)">
-  <div class="form-group">
-    <input type="number" class="form-control" placeholder="CUI" ng-model="cui">
-  </div>
-  <button type="submit" class="btn btn-default">Consultar</button>
-</form>
-<div class="panel-body">
-<form name="coursesForm" ng-submit="send()">
-<table class="table table-striped">
-<tr>
-<th> </th>
-<th>Código</th>
-<th>Nombre</th>
-<th>Créditos</th>
-<th>Semestre</th>
-</tr>
-<tr ng-repeat="course in courses">
-<td><input type="checkbox" ng-model="selection.ids[course.id]" name="chosen" id="{{course.id}}" /></td>
-<td>{{course.id}}</td>
-<td>{{course.name}}</td>
-<td>{{course.credits}}</td>
-<td>{{course.semester}}</td>
-</tr>
-</table>
-<button type="submit" class="btn btn-default">Matricular</button>
-<pre ng-bind="selection.ids | json"></pre>
-</form>
-</div>
 
-</div>
+<body ng-controller="MyController">
+
+  <div class="container">
+
+    <form class="navbar-form navbar-left" role="search" ng-submit="query(cui)">
+      <div class="form-group">
+        <input type="number" class="form-control" placeholder="CUI" ng-model="cui">
+      </div>
+      <button type="submit" class="btn btn-default">Consultar</button>
+    </form>
+
+    <div class="panel-body">
+
+      <form id="coursesForm" name="coursesForm" ng-submit="send()">
+        <table class="table table-striped">
+
+          <tr>
+            <th> </th>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Créditos</th>
+            <th>Semestre</th>
+          </tr>
+
+          <tr ng-repeat="course in courses">
+            <td><input type="checkbox" ng-model="selection.ids[course.id]" name="chosen" id="{{course.id}}" /></td>
+            <td>{{course.id}}</td>
+            <td>{{course.name}}</td>
+            <td>{{course.credits}}</td>
+            <td>{{course.semester}}</td>
+          </tr>
+
+        </table>
+
+        <!-- <pre ng-bind="selection.ids | json"></pre> -->
+
+        <!-- ANTES DE MATRICULARSE_ Que verifique la cantidad de creditos
+
+            BOTON_INACTIVO
+        -->
+        <button type="submit" class="btn btn-default">Matricular</button>
+
+      </form>
+
+      <!--  ....................................    -->
+      <br>
+      <div class="row">
+        <div class="col-sm-3" >
+          <form id="coursesForm2" name="coursesForm2" ng-submit="queryAvaliableCredits(cui)" >
+            <button onClick="creditosDisponibles()" type="query" class="btn btn-warning" >CREDITOS DISPONIBLES</button>
+            <!-- Times -->
+
+          </form>
+        </div>
+       <div class="col-sm-3"> <p style="font-size:24px" id="vecesDesaprobado">  </p> </div>
+
+       <div class="col-sm-3">
+           <button onclick="creditosUtilizados()" type="button" class="btn btn-success">CONTABILIZAR CREDITOS </button>
+       </div>
+       <div class="col-sm-3"> <p style="font-size:24px" id="cantCred"> </p> </div>
+      </div>
+
+      <!--<p> {{ courses[0].credits}} </p> -->
+
+      <script type="text/javascript">
+        function creditosUtilizados(){
+
+          /* DETERMINACION DE CREDITOS UTILIZADOS */
+
+              var dom_el = document.querySelector('[ng-controller="MyController"]');
+              var ng_el = angular.element(dom_el);
+              var ng_el_scope = ng_el.scope();
+              var courses = ng_el_scope.courses;
+
+              //document.getElementById("cantCred2").innerHTML = courses[0].credits;
+              var elems = document.forms['coursesForm'].elements;
+              var total = 0;
+
+              for(var i = 0; i < elems.length;i++){
+                if(elems[i].checked){
+                  //total+= getCreditHash(courses[i].id);
+                  total+= +(courses[i].credits);
+                }
+              }
+
+              document.getElementById("cantCred").innerHTML = total;
+        }
+        function creditosDisponibles()
+        {
+          // DETERMINACION DE CREDITOS_DISPONIBLES
+
+              var dom_el2 = document.querySelector('[ng-controller="MyController"]');
+              var ng_el2 = angular.element(dom_el2);
+              var ng_el_scope2 = ng_el2.scope();
+              var coursesTimes = ng_el_scope2.coursesTimes;
+
+              //document.getElementById("cantCred2").innerHTML = courses[0].credits;
+
+              var cantVecesLlevado = 0;
+              for(var i = 0; i < coursesTimes.length;i++){
+                if(coursesTimes[i].time > cantVecesLlevado){
+                  cantVecesLlevado = coursesTimes[i].time;
+                }
+              }
+              var creditos = 0;
+              if(cantVecesLlevado == 0) creditos = 28; //1ra matricula
+              if(cantVecesLlevado == 1) creditos = 23; //2da
+              if(cantVecesLlevado == 2) creditos = 18; //3ra
+              if(cantVecesLlevado >= 3) creditos = 13; // 4ta a mas
+
+              document.getElementById("vecesDesaprobado").innerHTML = creditos;
+        }
+      </script>
+
+    </div>
+
+  </div>
+
 </body>
 <script>
 var app = angular.module("MyApp", []);
 
 app.controller('MyController', function($scope, $http){
   $scope.count = 0;
-  $scope.cui = 20111464;
+  $scope.cui = "";
   $scope.courses = [];
+  $scope.coursesTimes = [];
   $scope.selection = {ids:{1: false}};
+
   $scope.query = function($cui){
     $http.get('matricula.php?cui='+$cui)
       .success(function(data, status, headers, config){
         $scope.courses = data;
+      }).
+      error(function(data, status, headers, config){
+      });
+  };
+  $scope.queryAvaliableCredits = function($cui){
+    $http.get('avaliableCredits.php?cui='+$cui)
+      .success(function(data, status, headers, config){
+        $scope.coursesTimes = data;
       }).
       error(function(data, status, headers, config){
       });
