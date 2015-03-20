@@ -15,6 +15,12 @@ $token = $_GET['key'];
 
 $cui = getCUI($token);
 //$cui = 20111464;
+
+if(empty($cui)){
+  http_response_code(500);
+  return;
+}
+
 $credits = array(28,28,23,18,13);
 
 $name = $db->select("alumnos", "cui = $cui");
