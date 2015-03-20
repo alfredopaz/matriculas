@@ -24,6 +24,7 @@
 <p ng-bind="studentData"></p>
 </div>
 
+<div ng-show="validUser">
 <div class="panel-body">
 <form name="coursesForm" ng-submit="send()">
 <table class="table table-striped">
@@ -37,7 +38,6 @@
 </tr>
 </table>
 
-
 <button type="submit" class="btn btn-default">Matricular</button>
 
 <div class="{{creditAlert}}" role="alert">
@@ -47,6 +47,7 @@
 <!--pre ng-bind="selection | json"></pre-->
 
 </form>
+</div>
 </div>
 </div>
 
@@ -73,6 +74,7 @@ app.controller('MyController', function($scope, $http){
   $scope.selection = {ids:{1301106: true}};
   $scope.maxCredits;
   $scope.creditAlert = "alert alert-success";
+  $scope.validUser = false;
 
   $scope.computeTotal = function() {
     var total = 0;
@@ -95,25 +97,35 @@ app.controller('MyController', function($scope, $http){
     $scope.key = authResult.access_token;
     $http({
       method: 'GET',
-      url: 'remember.php',
-      params:{ key:$scope.key }
-    }).success(function(data){
-      $scope.selection = data;
-    });
-    $http({
-      method: 'GET',
       url: 'name.php',
       params:{ key:$scope.key }
     }).success(function(data){
       $scope.maxCredits = data.credits;
       $scope.studentData = data.firstName + " " + data.lastName + " tiene cursos en " + data.time + " matrícula, máximo " + data.credits + " créditos";
-    });
-    $http.get('matricula.php?key=' + authResult.access_token)
-      .success(function(data, status, headers, config){
-        $scope.courses = data;
-      }).
-      error(function(data, status, headers, config){
+      $http({
+        method: 'GET',
+        url: 'remember.php',
+        params:{ key:$scope.key }
+      }).success(function(data){
+        $scope.selection = data;
       });
+      $http({
+        method: 'GET',
+        url: 'matricula.php',
+        params:{key:$scope.key}
+      }).success(function(data){
+        $scope.courses = data;
+      });
+      $scope.validUser = true;
+    }).error(function(data){
+      $http({
+        type: "GET",
+        url: "https://www.googleapis.com/oauth2/v2/userinfo?access_token="+authResult.access_token
+      }).success(function( data ){
+        $scope.studentData = data.email + ", no está registrado en nuestra base de datos";
+        $scope.validUser = false;
+      });
+    });
   });
   $scope.send = function(){
     $http({
@@ -121,7 +133,7 @@ app.controller('MyController', function($scope, $http){
       url: 'update.php',
       params:{ key:$scope.key, chosen: JSON.stringify($scope.selection.ids)}
     }).success(function(data){
-        window.alert(data);
+        window.alert("Prematricula concluida con éxito");
     });
   };
 });
