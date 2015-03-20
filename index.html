@@ -1,59 +1,102 @@
 <!DOCTYPE html>
 <html lang="es" ng-app="MyApp">
 <head>
-<meta charset="utf-8">
-<link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
-<script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
+     <meta charset="utf-8">
+     <!--Bootstrap-->     
+     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+     <!--AnjularJS-->
+     <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.26/angular.min.js"></script>
 </head>
 <body ng-controller="MyController">
-<div class="container">
-<form class="navbar-form navbar-left" role="search" ng-submit="query(cui)">
-  <div class="form-group">
-    <input type="number" class="form-control" placeholder="CUI" ng-model="cui">
-  </div>
-  <button type="submit" class="btn btn-default">Consultar</button>
-</form>
-<div class="panel-body">
-<form name="coursesForm" ng-submit="send()">
-<table class="table table-striped">
-<tr>
-<th> </th>
-<th>Código</th>
-<th>Nombre</th>
-<th>Créditos</th>
-<th>Semestre</th>
-</tr>
-<tr ng-repeat="course in courses">
-<td><input type="checkbox" ng-model="selection.ids[course.id]" name="chosen" id="{{course.id}}" /></td>
-<td>{{course.id}}</td>
-<td>{{course.name}}</td>
-<td>{{course.credits}}</td>
-<td>{{course.semester}}</td>
-</tr>
-</table>
-<button type="submit" class="btn btn-default">Matricular</button>
-<pre ng-bind="selection.ids | json"></pre>
-</form>
-</div>
-
-</div>
+    <div class="container">
+        <form class="navbar-form navbar-left" role="search" ng-submit="query(cui)">
+            <div class="form-group">
+               <input type="number" class="form-control" placeholder="CUI" ng-model="cui">
+            </div>
+            <button type="submit" class="btn btn-default">Consultar</button>
+        </form>
+        <div class="panel-body">
+          <form name="coursesForm" ng-submit="send()">
+             <table class="table table-striped">
+                <tr>
+                   <th></th>
+                   <th>Código</th>
+                   <th>Nombre</th>
+                   <th>Malla</th>
+                   <th>Semestre</th>
+                   <th>Créditos</th>
+                </tr>
+                <tr ng-repeat="course in courses">
+                   <td>
+<input type="checkbox" ng-model="selection.ids[course.id]" name="chosen" id="{{course.id}}" ng-change="addCredits(course.credits,selection.ids[course.id])" />
+                   </td>
+                   <td>{{course.id}}</td>
+                   <td>{{course.name}}
+                      <span class="glyphicon glyphicon-warning-sign" 
+                       ng-show="{{warningMessage(course.id,course.semester)}}"
+                       ng-mouseover="message = ' Curso en Decadencia'"
+                       ng-mouseout="message=''" >{{message}}
+                      </span> 
+                   </td>
+                   <td>{{greaterThan(course.id)}}</td>
+                   <td>{{course.semester}}</td>
+                   <td>{{course.credits}}</td>
+                </tr>
+                <tr>
+                   <td></td>
+                   <td></td>
+                   <td></td>
+                   <td>Creditos Seleccionados</td>
+                   <td></td>
+                   <td>{{count}}</td>
+                </tr>
+             </table>
+             <button type="submit" class="btn btn-default">Matricular</button>
+             <pre ng-bind="selection.ids | json"></pre>
+          </form>
+         </div>
+    </div>
 </body>
 <script>
 var app = angular.module("MyApp", []);
 
 app.controller('MyController', function($scope, $http){
   $scope.count = 0;
-  $scope.cui = 20111464;
+  $scope.cui = "";
   $scope.courses = [];
   $scope.selection = {ids:{1: false}};
+  //makes a query to database for courses and put them into courses
   $scope.query = function($cui){
     $http.get('matricula.php?cui='+$cui)
       .success(function(data, status, headers, config){
-        $scope.courses = data;
+           $scope.courses = data;
+
+           //count credits for this semester
+           $scope.addCredits = function(credits,isActive) {
+               if(isActive)
+                  $scope.count = parseInt($scope.count) + parseInt(credits);
+               else
+                  $scope.count = parseInt($scope.count) - parseInt(credits);
+           };
       }).
       error(function(data, status, headers, config){
       });
   };
+    
+  //ckecking malla-curricular
+  $scope.greaterThan = function(idCourse){
+     if(idCourse > 300000)
+        return 2013;
+     else
+        return 2002;
+  };
+
+  //warning message
+  $scope.warningMessage = function(idCourse,semester){
+        return idCourse < 300000 && semester <=7;
+  };
+
+  //when checkboxes were selected to register a enrollment
   $scope.send = function(){
     $http({
       method: 'GET',
@@ -63,6 +106,8 @@ app.controller('MyController', function($scope, $http){
         window.alert(data);
     });
   };
-});
+});  // end controller
+
 </script>
 </html>
+
