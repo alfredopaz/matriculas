@@ -1,9 +1,18 @@
 
 <?php
 include("class.db.php");
+
+$config = include('config.php');
+$db_type = $config['db_type'];
+$db_host = $config['db_host'];
+$db_name = $config['db_name'];
+$db_user = $config['db_user'];
+$db_pass = $config['db_pass'];
+
+$db = new db("$db_type:host=$db_host;dbname=$db_name", "$db_user", "$db_pass");
+
 $token = $_GET['key'];
 $courses = json_decode($_GET['chosen']);
-$db = new db("mysql:host=localhost;dbname=episunsa", "root", "admin123");
 $cui = getCUI($token);
 
 if(empty($cui)){

@@ -1,6 +1,14 @@
 <?php
 include("class.db.php");
-$db = new db("mysql:host=192.168.0.2;dbname=episunsa", "root", "admin123");
+
+$config = include('config.php');
+$db_type = $config['db_type'];
+$db_host = $config['db_host'];
+$db_name = $config['db_name'];
+$db_user = $config['db_user'];
+$db_pass = $config['db_pass'];
+
+$db = new db("$db_type:host=$db_host;dbname=$db_name", "$db_user", "$db_pass");
 
 $token = $_GET['key'];
 
