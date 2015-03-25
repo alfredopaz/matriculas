@@ -10,11 +10,26 @@ $db_pass = $config['db_pass'];
 
 $db = new db("$db_type:host=$db_host;dbname=$db_name", "$db_user", "$db_pass");
 
-$token = $_GET['key'];
+//$token = $_GET['key'];
 
-
-$cui = getCUI($token);
+$cui = $_GET['cui'];
+//$cui = getCUI($token);
 //$cui = 20111464;
+
+if (!function_exists('http_response_code'))
+{
+    function http_response_code($newcode = NULL)
+    {
+        static $code = 200;
+        if($newcode !== NULL)
+        {
+            header('X-PHP-Response-Code: '.$newcode, true, $newcode);
+            if(!headers_sent())
+                $code = $newcode;
+        }       
+        return $code;
+    }
+}
 
 if(empty($cui)){
   http_response_code(500);
@@ -25,20 +40,22 @@ $credits = array(28,28,23,18,13);
 
 $name = $db->select("alumnos", "cui = $cui");
 $courses = $db->select("matriculas", 
-                       "cui = $cui AND grade < 10 GROUP BY courseID",
+                       "cui = $cui AND grade <= 10 GROUP BY courseID",
                        "",
                        "courseID, MAX(time) as time");
-$m = 1;
+$m = 0;
 
 foreach($courses as $course){
   $courseID = $course['courseID'];
   if(!approved($courseID)){
     $time = $course['time'];
-    if($student['time'] > $m){
-      $m = $student['time'];
+   
+    if($time > $m){
+      $m = $time;
     }
   }
 }
+$m++;
 print_r(json_encode(array('lastName' => $name[0]['lastName'], 
                           'firstName' => $name[0]['firstName'],
                           'credits' => $credits[$m],
@@ -47,9 +64,11 @@ print_r(json_encode(array('lastName' => $name[0]['lastName'],
 function getCUI($token){
   global $db;
   $json = file_get_contents("https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=".$token);
+  
   $data = json_decode($json);
   if(!isset($data->{'error'})){
     $email = $data->{'email'};
+   
     if($email == 'apaz@episunsa.edu.pe'){
       $email = 'alvin.chunga.mamani@gmail.com';
     }
