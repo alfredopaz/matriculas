@@ -1,10 +1,10 @@
 
 <?php
 include("class.db.php");
-$cui = 20111464;
-
+//$cui = 20111464;
+$cui = $_GET['cui'];
 $db = new db("mysql:host=localhost;dbname=episunsa", "root", "admin123");
-
+$db->exec("SET NAMES utf8");  
 //TODO sort by semester
 $offeredCourses = $db->select("cursosAbiertos");
 
